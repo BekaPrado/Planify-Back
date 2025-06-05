@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model tbl_categoria {
+  id_categoria         Int                    @id @default(autoincrement())
+  categoria            String                 @unique(map: "categoria") @db.VarChar(50)
+  tbl_evento_categoria tbl_evento_categoria[]
+}
+
+model tbl_estado {
+  id_estado  Int          @id @default(autoincrement())
+  estado     String       @unique(map: "estado") @db.VarChar(50)
+  tbl_evento tbl_evento[]
+}
+
+model tbl_evento {
+  id_evento             Int                     @id @default(autoincrement())
+  titulo                String                  @db.VarChar(50)
+  descricao             String?                 @db.Text
+  data_evento           DateTime                @db.Date
+  horario               DateTime                @db.Time(0)
+  local                 String                  @db.VarChar(70)
+  imagem                String?                 @db.VarChar(500)
+  limite_participante   Decimal?                @db.Decimal(10, 2)
+  valor_ingresso        Decimal?                @db.Decimal(10, 2)
+  id_usuario            Int
+  id_estado             Int
+  tbl_estado            tbl_estado              @relation(fields: [id_estado], references: [id_estado], onDelete: Cascade, onUpdate: NoAction, map: "fk_estado_evento")
+  tbl_usuario           tbl_usuario             @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "fk_usuario_evento")
+  tbl_evento_categoria  tbl_evento_categoria[]
+  tbl_participar_evento tbl_participar_evento[]
+
+  @@index([id_estado], map: "fk_estado_evento")
+  @@index([id_usuario], map: "fk_usuario_evento")
+}
+
+model tbl_evento_categoria {
+  id_evento_categoria Int           @id @default(autoincrement())
+  id_categoria        Int
+  id_evento           Int
+  tbl_categoria       tbl_categoria @relation(fields: [id_categoria], references: [id_categoria], onDelete: Cascade, onUpdate: NoAction, map: "fk_evento_categoria_categoria")
+  tbl_evento          tbl_evento    @relation(fields: [id_evento], references: [id_evento], onDelete: Cascade, onUpdate: NoAction, map: "fk_evento_categoria_evento")
+
+  @@index([id_categoria], map: "fk_evento_categoria_categoria")
+  @@index([id_evento], map: "fk_evento_categoria_evento")
+}
+
+model tbl_participar_evento {
+  id_participar_evento Int         @id @default(autoincrement())
+  id_evento            Int
+  id_usuario           Int
+  tbl_evento           tbl_evento  @relation(fields: [id_evento], references: [id_evento], onDelete: NoAction, onUpdate: NoAction, map: "fk_participar_evento_evento")
+  tbl_usuario          tbl_usuario @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_participar_evento_usuario")
+
+  @@index([id_evento], map: "fk_participar_evento_evento")
+  @@index([id_usuario], map: "fk_participar_evento_usuario")
+}
+
+model tbl_usuario {
+  id_usuario            Int                     @id @default(autoincrement())
+  nome                  String                  @db.VarChar(100)
+  email                 String                  @unique(map: "email") @db.VarChar(60)
+  senha                 String                  @db.VarChar(20)
+  data_nascimento       DateTime                @db.Date
+  foto_perfil           String?                 @db.VarChar(500)
+  palavra_chave         String                  @db.VarChar(15)
+  tbl_evento            tbl_evento[]
+  tbl_participar_evento tbl_participar_evento[]
+}
+
+model tbl_codigo_recuperacao {
+  id        Int      @id @default(autoincrement())
+  email     String   @db.VarChar(60)
+  codigo    String   @db.VarChar(10)
+  expiracao DateTime @db.DateTime(0)
+}
